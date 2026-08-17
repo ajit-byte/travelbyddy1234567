@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface-container-highest: #e0e3e5;
+  --color-surface-tint: #4059aa;
+  --color-outline-variant: #c5c5d3;
+  --color-surface-variant: #e0e3e5;
+  --color-on-surface: #191c1e;
+  --color-tertiary-fixed-dim: #ffb95f;
+  --color-surface-container-low: #f2f4f6;
+  --color-primary-fixed: #dce1ff;
+  --color-on-primary: #ffffff;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #004666;
+  --color-tertiary-fixed: #ffddb8;
+  --color-on-tertiary-container: #ef9900;
+  --color-tertiary-container: #5c3800;
+  --color-surface-container: #eceef0;
+  --color-surface: #f7f9fb;
+  --color-on-primary-fixed-variant: #264191;
+  --color-inverse-primary: #b6c4ff;
+  --color-secondary-fixed-dim: #89ceff;
+  --color-primary-fixed-dim: #b6c4ff;
+  --color-surface-bright: #f7f9fb;
+  --color-inverse-surface: #2d3133;
+  --color-secondary-container: #39b8fd;
+  --color-outline: #757682;
+  --color-primary: #00236f;
+  --color-inverse-on-surface: #eff1f3;
+  --color-tertiary: #3e2400;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-surface-container-lowest: #ffffff;
+  --color-on-error-container: #93000a;
+  --color-primary-container: #1e3a8a;
+  --color-on-primary-container: #90a8ff;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-fixed-variant: #653e00;
+  --color-secondary: #006591;
+  --color-on-surface-variant: #444651;
+  --color-on-error: #ffffff;
+  --color-surface-dim: #d8dadc;
+  --color-on-background: #191c1e;
+  --color-on-primary-fixed: #00164e;
+  --color-on-secondary-fixed: #001e2f;
+  --color-on-tertiary-fixed: #2a1700;
+  --color-background: #f7f9fb;
+  --color-secondary-fixed: #c9e6ff;
+  --color-surface-container-high: #e6e8ea;
+  --color-on-secondary-fixed-variant: #004c6e;
+
+  /* Fonts */
+  --font-headline: "Manrope", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-label: "Inter", sans-serif;
+
+  /* Legacy Colors mapped for safe transitions */
+  --color-dominant: #ffffff;
+  --color-dominant-text: #191c1e;
+  --color-secondary-dark: #004c6e;
+  --color-secondary-text: #ffffff;
+  --color-accent: #006591;
+  --color-accent-light: #39b8fd;
+  --color-accent-dark: #004666;
+  --color-accent-text: #ffffff;
+}
+
+html, body {
+  @apply bg-surface text-on-surface font-body;
+  font-size: var(--ws-font-size, 16px);
+  transition: font-size 0.2s ease;
+}
+
+/* Web Settings: Compact View */
+body.compact-view .p-8  { padding: 1.25rem !important; }
+body.compact-view .p-6  { padding: 1rem !important; }
+body.compact-view .p-4  { padding: 0.6rem !important; }
+body.compact-view .gap-6 { gap: 0.75rem !important; }
+body.compact-view .gap-8 { gap: 1rem !important; }
+body.compact-view .mb-6 { margin-bottom: 0.75rem !important; }
+body.compact-view .mb-8 { margin-bottom: 1rem !important; }
+body.compact-view .py-8 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+body.compact-view .space-y-8 > * + * { margin-top: 1rem !important; }
+body.compact-view .space-y-6 > * + * { margin-top: 0.75rem !important; }
+
+input, textarea, button {
+  @apply outline-none;
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+}
+.glass-panel {
+  background: rgba(247, 249, 251, 0.7);
+  backdrop-filter: blur(20px);
+}
+.bg-doodle {
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 10l5 5m10-5l-5 5M50 10a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm30 5h10M15 45c0 2 2 4 4 4s4-2 4-4-2-4-4-4-4 2-4 4zm40 5l-8-8 8-8m25 15l5 5m5-5l-5 5M10 80l10 10M50 85a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm35-5l-5 5-5-5' stroke='%2339b8fd' stroke-width='0.5' fill='none' opacity='0.15'/%3E%3C/svg%3E");
+  background-size: 150px 150px;
+}
+.adventure-gradient {
+  background: linear-gradient(135deg, #00236f 0%, #1e3a8a 100%);
+}
+.cta-gradient {
+  background: linear-gradient(135deg, #ffddb8 0%, #ef9900 100%);
+}
+.premium-gradient {
+  background: linear-gradient(135deg, #fef08a 0%, #eab308 100%);
+}
+.hero-gradient-overlay {
+  background: linear-gradient(to bottom, rgba(25, 28, 30, 0.4), rgba(25, 28, 30, 0.8));
+}
+.tonal-shift-bg {
+  background: linear-gradient(to bottom, #f7f9fb, #f2f4f6);
+}
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+@keyframes pulse-orange {
+  0%, 100% { color: inherit; opacity: 1; }
+  50% { color: #f97316; opacity: 0.7; } 
+}
+
+.animate-pulse-orange {
+  animation: pulse-orange 1.5s infinite;
+}
+
+/* ── Image loading defaults ───────────────────────────────────────────────
+   Explicitly mark all img elements as lazy by default so the browser
+   doesn't trigger the "Images loaded lazily and replaced with placeholders"
+   intervention warning. Above-the-fold images override this with
+   loading="eager" directly on the element.
+   ──────────────────────────────────────────────────────────────────────── */
+img {
+  content-visibility: auto;
+}
+
+img:not([loading]) {
+  loading: lazy; /* CSS hint — actual enforcement is via the attribute below */
+}
+
+/* Feed/list containers: let browser skip off-screen rendering */
+.space-y-6,
+.space-y-8,
+.grid {
+  contain: layout style;
+}
