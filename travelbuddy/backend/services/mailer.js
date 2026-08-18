@@ -1,9 +1,11 @@
 import dotenv from 'dotenv';
-import { Resend } from 'resend';
+import { BrevoClient } from '@getbrevo/brevo';
 
 dotenv.config();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const brevo = new BrevoClient({
+  apiKey: process.env.BREVO_API_KEY,
+});
 
 const otpStore = new Map();
 const rateLimitStore = new Map();
@@ -25,6 +27,7 @@ function checkRateLimit(key) {
       count: 1,
       windowStart: now,
     });
+
     return true;
   }
 
@@ -33,6 +36,7 @@ function checkRateLimit(key) {
   }
 
   record.count++;
+
   return true;
 }
 
@@ -51,40 +55,78 @@ export async function sendEmailOTP(email) {
     expiresAt: Date.now() + OTP_EXPIRY_MS,
   });
 
-  const { data, error } = await resend.emails.send({
-    from: process.env.EMAIL_FROM,
-    to: email,
-    subject: 'Your TravelBuddy Verification Code',
-    html: `
-      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f8f9fa;border-radius:16px;">
-        <h2 style="color:#1a237e;margin-bottom:8px;">
-          Verify your email
-        </h2>
+  try {
+    const result = await brevo.transactionalEmails.sendTransacEmail({
+      sender: {
+        name: 'TravelBuddy',
+        email: process.env.EMAIL_FROM,
+      },
 
-        <p style="color:#555;margin-bottom:24px;">
-          Use the code below to verify your email address.
-          It expires in <strong>10 minutes</strong>.
-        </p>
+      to: [
+        {
+          email: email,
+        },
+      ],
 
-        <div style="background:#fff;border:2px solid #e8eaf6;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
-          <span style="font-size:40px;font-weight:900;letter-spacing:12px;color:#1a237e;">
-            ${otp}
-          </span>
+      subject: 'Your TravelBuddy Verification Code',
+
+      htmlContent: `
+        <div style="
+          font-family:sans-serif;
+          max-width:480px;
+          margin:0 auto;
+          padding:32px;
+          background:#f8f9fa;
+          border-radius:16px;
+        ">
+
+          <h2 style="color:#1a237e;margin-bottom:8px;">
+            Verify your email
+          </h2>
+
+          <p style="color:#555;margin-bottom:24px;">
+            Use the code below to verify your email address.
+            It expires in <strong>10 minutes</strong>.
+          </p>
+
+          <div style="
+            background:#fff;
+            border:2px solid #e8eaf6;
+            border-radius:12px;
+            padding:24px;
+            text-align:center;
+            margin-bottom:24px;
+          ">
+
+            <span style="
+              font-size:40px;
+              font-weight:900;
+              letter-spacing:12px;
+              color:#1a237e;
+            ">
+              ${otp}
+            </span>
+
+          </div>
+
+          <p style="color:#999;font-size:12px;">
+            If you didn't request this, you can safely ignore this email.
+          </p>
+
         </div>
+      `,
+    });
 
-        <p style="color:#999;font-size:12px;">
-          If you didn't request this, you can safely ignore this email.
-        </p>
-      </div>
-    `,
-  });
+    console.log('OTP email sent successfully:', result?.messageId);
 
-  if (error) {
-    console.error('Resend error:', error);
+  } catch (error) {
+    console.error(
+      'Brevo email error:',
+      error?.message || error
+    );
+
     throw new Error('Failed to send OTP email');
   }
-
-  console.log('OTP email sent:', data?.id);
 }
 
 export function verifyEmailOTP(email, inputOtp) {
