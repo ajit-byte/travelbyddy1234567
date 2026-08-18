@@ -5,13 +5,13 @@ dotenv.config();
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
-  secure: false, // STARTTLS
+  secure: false,
+  family: 4,
   auth: {
     user: process.env.EMAIL_USER || process.env.SMTP_USER,
     pass: process.env.EMAIL_PASS || process.env.SMTP_PASS,
   },
 });
-
 const otpStore = new Map();
 const rateLimitStore = new Map();
 
