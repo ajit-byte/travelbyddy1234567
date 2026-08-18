@@ -1,6 +1,7 @@
-import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-dotenv.config();
+import { Resend } from 'resend';
+
+// Resend HTTP API — works on Render free tier (no SMTP port blocking)
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const otpStore = new Map();
 const rateLimitStore = new Map();
@@ -8,17 +9,6 @@ const rateLimitStore = new Map();
 const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
 const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-
-// Create transporter — uses Gmail SMTP
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // TLS
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
 
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -47,9 +37,8 @@ export async function sendEmailOTP(email) {
   const otp = generateOTP();
   otpStore.set(`email:${email}`, { otp, expiresAt: Date.now() + OTP_EXPIRY_MS });
 
-  // Send real email via Gmail SMTP
-  await transporter.sendMail({
-    from: `"TravelBuddy" <${process.env.EMAIL_USER}>`,
+  const { error } = await resend.emails.send({
+    from: 'TravelBuddy <onboarding@resend.dev>',
     to: email,
     subject: 'Your TravelBuddy Verification Code',
     html: `
@@ -63,6 +52,11 @@ export async function sendEmailOTP(email) {
       </div>
     `,
   });
+
+  if (error) {
+    console.error('Resend error:', error);
+    throw new Error(error.message || 'Failed to send email');
+  }
 }
 
 export function verifyEmailOTP(email, inputOtp) {
