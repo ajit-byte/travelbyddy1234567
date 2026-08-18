@@ -1,17 +1,10 @@
-import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import { Resend } from 'resend';
+
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  family: 4,
-  auth: {
-    user: process.env.EMAIL_USER || process.env.SMTP_USER,
-    pass: process.env.EMAIL_PASS || process.env.SMTP_PASS,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 const otpStore = new Map();
 const rateLimitStore = new Map();
 
@@ -26,48 +19,103 @@ function generateOTP() {
 function checkRateLimit(key) {
   const now = Date.now();
   const record = rateLimitStore.get(key);
+
   if (!record || now - record.windowStart > RATE_LIMIT_WINDOW_MS) {
-    rateLimitStore.set(key, { count: 1, windowStart: now });
+    rateLimitStore.set(key, {
+      count: 1,
+      windowStart: now,
+    });
     return true;
   }
-  if (record.count >= RATE_LIMIT_MAX) return false;
+
+  if (record.count >= RATE_LIMIT_MAX) {
+    return false;
+  }
+
   record.count++;
   return true;
 }
 
 export async function sendEmailOTP(email) {
   if (!checkRateLimit(`email:${email}`)) {
-    throw Object.assign(new Error('Too many OTP requests. Try again in 1 hour.'), { status: 429 });
+    throw Object.assign(
+      new Error('Too many OTP requests. Try again in 1 hour.'),
+      { status: 429 }
+    );
   }
 
   const otp = generateOTP();
-  otpStore.set(`email:${email}`, { otp, expiresAt: Date.now() + OTP_EXPIRY_MS });
 
-  await transporter.sendMail({
-    from: `"TravelBuddy" <${process.env.EMAIL_USER || process.env.SMTP_USER}>`,
+  otpStore.set(`email:${email}`, {
+    otp,
+    expiresAt: Date.now() + OTP_EXPIRY_MS,
+  });
+
+  const { data, error } = await resend.emails.send({
+    from: process.env.EMAIL_FROM,
     to: email,
     subject: 'Your TravelBuddy Verification Code',
     html: `
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f8f9fa;border-radius:16px;">
-        <h2 style="color:#1a237e;margin-bottom:8px;">Verify your email</h2>
-        <p style="color:#555;margin-bottom:24px;">Use the code below to verify your email address. It expires in <strong>10 minutes</strong>.</p>
+        <h2 style="color:#1a237e;margin-bottom:8px;">
+          Verify your email
+        </h2>
+
+        <p style="color:#555;margin-bottom:24px;">
+          Use the code below to verify your email address.
+          It expires in <strong>10 minutes</strong>.
+        </p>
+
         <div style="background:#fff;border:2px solid #e8eaf6;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
-          <span style="font-size:40px;font-weight:900;letter-spacing:12px;color:#1a237e;">${otp}</span>
+          <span style="font-size:40px;font-weight:900;letter-spacing:12px;color:#1a237e;">
+            ${otp}
+          </span>
         </div>
-        <p style="color:#999;font-size:12px;">If you didn't request this, you can safely ignore this email.</p>
+
+        <p style="color:#999;font-size:12px;">
+          If you didn't request this, you can safely ignore this email.
+        </p>
       </div>
     `,
   });
+
+  if (error) {
+    console.error('Resend error:', error);
+    throw new Error('Failed to send OTP email');
+  }
+
+  console.log('OTP email sent:', data?.id);
 }
 
 export function verifyEmailOTP(email, inputOtp) {
   const record = otpStore.get(`email:${email}`);
-  if (!record) return { valid: false, reason: 'expired' };
+
+  if (!record) {
+    return {
+      valid: false,
+      reason: 'expired',
+    };
+  }
+
   if (Date.now() > record.expiresAt) {
     otpStore.delete(`email:${email}`);
-    return { valid: false, reason: 'expired' };
+
+    return {
+      valid: false,
+      reason: 'expired',
+    };
   }
-  if (record.otp !== inputOtp.trim()) return { valid: false, reason: 'mismatch' };
+
+  if (record.otp !== inputOtp.trim()) {
+    return {
+      valid: false,
+      reason: 'mismatch',
+    };
+  }
+
   otpStore.delete(`email:${email}`);
-  return { valid: true };
+
+  return {
+    valid: true,
+  };
 }
