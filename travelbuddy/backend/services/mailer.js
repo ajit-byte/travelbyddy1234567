@@ -7,8 +7,8 @@ const transporter = nodemailer.createTransport({
   port: 465,
   secure: true, // SSL
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: process.env.EMAIL_USER || process.env.SMTP_USER,
+    pass: process.env.EMAIL_PASS || process.env.SMTP_PASS,
   },
 });
 
@@ -44,7 +44,7 @@ export async function sendEmailOTP(email) {
   otpStore.set(`email:${email}`, { otp, expiresAt: Date.now() + OTP_EXPIRY_MS });
 
   await transporter.sendMail({
-    from: `"TravelBuddy" <${process.env.SMTP_USER}>`,
+    from: `"TravelBuddy" <${process.env.EMAIL_USER || process.env.SMTP_USER}>`,
     to: email,
     subject: 'Your TravelBuddy Verification Code',
     html: `
