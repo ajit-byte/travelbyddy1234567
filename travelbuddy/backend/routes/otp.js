@@ -14,8 +14,17 @@ router.post('/send-email', async (req, res) => {
     res.json({ msg: 'OTP sent' });
   } catch (err) {
     if (err.status === 429) return res.status(429).json({ msg: err.message });
-    console.error('sendEmailOTP error:', err);
-    res.status(500).json({ msg: 'Failed to send OTP. Please try again.' });
+    // Log full error details for debugging
+    console.error('sendEmailOTP error code:', err.code);
+    console.error('sendEmailOTP error response:', err.response);
+    console.error('sendEmailOTP error:', err.message);
+    console.error('EMAIL_USER set:', !!process.env.EMAIL_USER, '| SMTP_USER set:', !!process.env.SMTP_USER);
+    res.status(500).json({ 
+      msg: 'Failed to send OTP. Please try again.',
+      // Only show detail in non-production for debugging — remove after fix
+      detail: process.env.NODE_ENV !== 'production' ? err.message : undefined,
+      emailConfigured: !!(process.env.EMAIL_USER || process.env.SMTP_USER)
+    });
   }
 });
 
