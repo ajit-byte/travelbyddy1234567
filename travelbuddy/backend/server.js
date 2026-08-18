@@ -108,6 +108,9 @@ app.use(cookieParser());
 app.use(passport.initialize());
 app.use('/uploads', express.static('uploads'));
 
+// Health check
+app.get('/', (req, res) => res.json({ status: 'TravelBuddy API is running' }));
+
 app.use('/api/auth/', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/itineraries', itineraryRoutes);
