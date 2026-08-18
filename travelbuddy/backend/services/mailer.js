@@ -1,11 +1,6 @@
 import dotenv from 'dotenv';
-import { BrevoClient } from '@getbrevo/brevo';
 
 dotenv.config();
-
-const brevo = new BrevoClient({
-  apiKey: process.env.BREVO_API_KEY,
-});
 
 const otpStore = new Map();
 const rateLimitStore = new Map();
@@ -15,6 +10,11 @@ const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 function generateOTP() {
+  // Demo mode uses a fixed OTP
+  if (process.env.OTP_DEMO_MODE === 'true') {
+    return process.env.DEMO_OTP || '123456';
+  }
+
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
@@ -55,78 +55,19 @@ export async function sendEmailOTP(email) {
     expiresAt: Date.now() + OTP_EXPIRY_MS,
   });
 
-  try {
-    const result = await brevo.transactionalEmails.sendTransacEmail({
-      sender: {
-        name: 'TravelBuddy',
-        email: process.env.EMAIL_FROM,
-      },
+  // DEMO MODE
+  if (process.env.OTP_DEMO_MODE === 'true') {
+    console.log('================================');
+    console.log('TRAVELBUDDY DEMO OTP');
+    console.log('Email:', email);
+    console.log('OTP:', otp);
+    console.log('================================');
 
-      to: [
-        {
-          email: email,
-        },
-      ],
-
-      subject: 'Your TravelBuddy Verification Code',
-
-      htmlContent: `
-        <div style="
-          font-family:sans-serif;
-          max-width:480px;
-          margin:0 auto;
-          padding:32px;
-          background:#f8f9fa;
-          border-radius:16px;
-        ">
-
-          <h2 style="color:#1a237e;margin-bottom:8px;">
-            Verify your email
-          </h2>
-
-          <p style="color:#555;margin-bottom:24px;">
-            Use the code below to verify your email address.
-            It expires in <strong>10 minutes</strong>.
-          </p>
-
-          <div style="
-            background:#fff;
-            border:2px solid #e8eaf6;
-            border-radius:12px;
-            padding:24px;
-            text-align:center;
-            margin-bottom:24px;
-          ">
-
-            <span style="
-              font-size:40px;
-              font-weight:900;
-              letter-spacing:12px;
-              color:#1a237e;
-            ">
-              ${otp}
-            </span>
-
-          </div>
-
-          <p style="color:#999;font-size:12px;">
-            If you didn't request this, you can safely ignore this email.
-          </p>
-
-        </div>
-      `,
-    });
-
-    console.log('OTP email sent successfully:', result?.messageId);
-
-  } catch (error) {
-    console.error(
-      'Brevo email error:',
-      error?.message || error
-    );
-
-    throw new Error('Failed to send OTP email');
+    return;
   }
+
+  // Real email provider should be added here later.
+  throw new Error('Email service is not configured.');
 }
 
 export function verifyEmailOTP(email, inputOtp) {
