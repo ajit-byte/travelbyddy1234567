@@ -1,8 +1,6 @@
-import * as Brevo from '@getbrevo/brevo';
+import { Resend } from 'resend';
 
-// Brevo (Sendinblue) HTTP API — works on Render free tier, sends to any email
-const apiInstance = new Brevo.TransactionalEmailsApi();
-apiInstance.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const otpStore = new Map();
 const rateLimitStore = new Map();
@@ -38,22 +36,26 @@ export async function sendEmailOTP(email) {
   const otp = generateOTP();
   otpStore.set(`email:${email}`, { otp, expiresAt: Date.now() + OTP_EXPIRY_MS });
 
-  const sendSmtpEmail = new Brevo.SendSmtpEmail();
-  sendSmtpEmail.subject = 'Your TravelBuddy Verification Code';
-  sendSmtpEmail.htmlContent = `
-    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f8f9fa;border-radius:16px;">
-      <h2 style="color:#1a237e;margin-bottom:8px;">Verify your email</h2>
-      <p style="color:#555;margin-bottom:24px;">Use the code below to verify your email address. It expires in <strong>10 minutes</strong>.</p>
-      <div style="background:#fff;border:2px solid #e8eaf6;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
-        <span style="font-size:40px;font-weight:900;letter-spacing:12px;color:#1a237e;">${otp}</span>
+  const { error } = await resend.emails.send({
+    from: 'TravelBuddy <onboarding@resend.dev>',
+    to: email,
+    subject: 'Your TravelBuddy Verification Code',
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f8f9fa;border-radius:16px;">
+        <h2 style="color:#1a237e;margin-bottom:8px;">Verify your email</h2>
+        <p style="color:#555;margin-bottom:24px;">Use the code below to verify your email address. It expires in <strong>10 minutes</strong>.</p>
+        <div style="background:#fff;border:2px solid #e8eaf6;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
+          <span style="font-size:40px;font-weight:900;letter-spacing:12px;color:#1a237e;">${otp}</span>
+        </div>
+        <p style="color:#999;font-size:12px;">If you didn't request this, you can safely ignore this email.</p>
       </div>
-      <p style="color:#999;font-size:12px;">If you didn't request this, you can safely ignore this email.</p>
-    </div>
-  `;
-  sendSmtpEmail.sender = { name: 'TravelBuddy', email: process.env.BREVO_SENDER_EMAIL || process.env.EMAIL_USER };
-  sendSmtpEmail.to = [{ email }];
+    `,
+  });
 
-  await apiInstance.sendTransacEmail(sendSmtpEmail);
+  if (error) {
+    console.error('Resend error:', error);
+    throw new Error(error.message || 'Failed to send email');
+  }
 }
 
 export function verifyEmailOTP(email, inputOtp) {
