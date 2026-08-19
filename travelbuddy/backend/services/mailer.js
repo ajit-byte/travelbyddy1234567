@@ -37,7 +37,7 @@ export async function sendEmailOTP(email) {
   otpStore.set(`email:${email}`, { otp, expiresAt: Date.now() + OTP_EXPIRY_MS });
 
   const { error } = await resend.emails.send({
-    from: 'TravelBuddy <onboarding@resend.dev>',
+    from: 'TravelBuddy <noreply@ajitkumarshrestha.com.np>',
     to: email,
     subject: 'Your TravelBuddy Verification Code',
     html: `
